@@ -16,3 +16,7 @@ kit/
 
 # real-laptop test folders: reports carry host names
 /rope-test-fat32/
+
+# ElevenLabs API key (local only, never commit)
+/elevenlabs
+/elevenlabs*

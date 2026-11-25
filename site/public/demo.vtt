@@ -1,0 +1,26 @@
+WEBVTT
+
+1
+00:00:00.350 --> 00:00:08.060
+This is Rope. It makes AI pictures on the laptop you already have. No cloud, no account, and no big graphics card.
+
+2
+00:00:08.960 --> 00:00:17.640
+Type what you want to see. Before anything runs, Rope reads your laptop and plans the picture: the model, the size, and how long it will take.
+
+3
+00:00:18.340 --> 00:00:24.980
+Press generate, and watch the picture form, step by step. You can pause it, or change the prompt halfway.
+
+4
+00:00:35.840 --> 00:00:45.820
+Every laptop gets its own plan. An old four gigabyte laptop, or a gaming laptop: Rope shows what runs there, and how fast, before you start.
+
+5
+00:00:46.720 --> 00:00:52.850
+Already have a model file, even a big one? Paste its path. Rope checks it, and finds a way to run it.
+
+6
+00:00:54.356 --> 00:01:02.066
+Rope is free, it works offline, and it installs in two minutes. Download it at rope-ai.vercel.app.
+

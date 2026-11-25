@@ -4,14 +4,13 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
   ArrowDown, Check, ChevronDown, CircleDashed, Clock, Cpu, Download, Eye, FileBox, Layers, Lock, Maximize2,
-  MonitorDown, Plug, ShieldCheck, Sparkles, Wand2,
+  MonitorDown, Play, Plug, ShieldCheck, Sparkles, Wand2,
 } from 'lucide-react'
 const RopeScene = lazy(() => import('./components/RopeScene'))   // three.js loads after the text is on screen
-import { Github } from './components/GithubIcon'
 import Nav, { Footer } from './components/Nav'
 import plans from './data/plans.json'
 import { SHOWCASE } from './data/showcase'
-import { DOWNLOAD, REPO, SETUP_MB, SETUP_SHA256, VERSION, reducedMotion } from './site'
+import { DOWNLOAD, SETUP_MB, SETUP_SHA256, VERSION, reducedMotion } from './site'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -29,7 +28,7 @@ function Hero() {
           <p className="lede">Rope reads your laptop, picks the image model that fits it, and tells you how long a picture will take — before it starts. No cloud, no account, no graphics card needed.</p>
           <div className="cta-row">
             <a className="btn btn-primary" href={DOWNLOAD}><MonitorDown size={19} /> Download for Windows <small>{SETUP_MB} MB</small></a>
-            <a className="btn" href={REPO} target="_blank" rel="noreferrer"><Github size={18} /> View the source</a>
+            <a className="btn" href="#demo"><Play size={17} /> Watch the 1-minute demo</a>
           </div>
           <div className="hero-meta">
             <span><Check size={15} /> Windows 10 / 11, 64-bit</span>
@@ -58,6 +57,25 @@ function Showcase() {
         ))}
       </div>
       <p className="showcase-note">Every picture above was made by Rope on one ordinary gaming laptop from 2021. No cloud.</p>
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ demo video */
+function Demo() {
+  return (
+    <section id="demo" style={{ paddingTop: 40 }}>
+      <div className="wrap">
+        <div className="kicker reveal">See it work</div>
+        <h2 className="reveal">One minute. <span className="grad-text">One real laptop.</span></h2>
+        <p className="sub reveal">Recorded on the 2021 laptop Rope is built on: the plan, a picture forming step by step, the planner for other laptops, and a big model file of your own. Nothing is sped up.</p>
+        <div className="demo-frame reveal">
+          <video controls playsInline preload="metadata" poster="/demo-poster.webp" width={1920} height={1080} aria-label="Rope demo video, 1 minute, with narration and captions">
+            <source src="/demo.mp4" type="video/mp4" />
+            <track kind="captions" src="/demo.vtt" srcLang="en" label="English" />
+          </video>
+        </div>
+      </div>
     </section>
   )
 }
@@ -453,6 +471,7 @@ export default function Home() {
       <main id="main">
         <Hero />
         <Showcase />
+        <Demo />
         <Problem />
         <How />
         <Planner />
