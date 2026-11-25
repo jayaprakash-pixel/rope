@@ -72,38 +72,40 @@ img { max-width: 100%; display: block; }
 .btn-sm { padding: 9px 16px; font-size: 14px; border-radius: 11px; }
 .btn small { font-weight: 500; opacity: 0.8; font-size: 13px; }
 
-/* ---------- hero: the scroll film ---------- */
-.journey { position: relative; height: 430vh; background: #05040a; }
-.journey-stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; isolation: isolate; }
-.journey-canvas { position: absolute; inset: 0; z-index: 0; }
-.journey-canvas canvas { width: 100% !important; height: 100% !important; display: block; }
-.journey-canvas.no-webgl { background: radial-gradient(ellipse at 70% 45%, rgba(124, 58, 237, 0.45), transparent 60%), url(/showcase/xl-lighthouse.webp) 78% 50% / 38% no-repeat, #05040a; }
-.journey-shade { position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: linear-gradient(90deg, rgba(5, 4, 10, 0.92) 0%, rgba(5, 4, 10, 0.55) 34%, transparent 58%), linear-gradient(transparent 80%, rgba(5, 4, 10, 0.9)); }
-.journey-acts { position: relative; z-index: 2; height: 100%; color: #f4f2fb; }
-.act { position: absolute; left: 24px; right: 24px; top: 50%; translate: 0 -50%; max-width: 600px; opacity: 0; will-change: opacity, transform; }
-.act h1 { font-size: clamp(42px, 5vw, 72px); margin: 22px 0 20px; }
-.act h2 { font-size: clamp(34px, 4.2vw, 58px); }
-.act .sub, .act .lede { color: #b9b4d4; }
-.act-hero { opacity: 1; }
-.hud { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; opacity: 0; will-change: transform, opacity; }
-.hud i { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: #c4b5fd; box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.25), 0 0 18px #a78bfa; }
-.hud i::after { content: ''; position: absolute; left: 9px; top: 4px; width: 46px; height: 1px; background: linear-gradient(90deg, #c4b5fd, transparent); }
-.hud span { position: absolute; left: 58px; top: -15px; white-space: nowrap; padding: 6px 12px; border-radius: 10px; font-family: var(--mono); font-size: 12.5px; color: #e9e6f5;
-  background: rgba(16, 12, 30, 0.72); border: 1px solid rgba(196, 181, 253, 0.35); backdrop-filter: blur(8px); }
-.hud b { color: #c4b5fd; margin-right: 8px; font-weight: 600; }
-.journey-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; z-index: 3; background: rgba(255, 255, 255, 0.06); }
-.journey-progress div { height: 100%; background: var(--grad); transform-origin: left; transform: scaleX(0); }
-.journey .scroll-cue { z-index: 3; color: #8b86a8; }
-@media (max-width: 760px) {
-  .journey { height: 340vh; }
-  .journey-shade { background: linear-gradient(rgba(5, 4, 10, 0.9) 0%, rgba(5, 4, 10, 0.55) 45%, transparent 62%), linear-gradient(transparent 82%, rgba(5, 4, 10, 0.9)); }
-  .act { top: 96px; translate: 0 0; }
-  .act h1 { font-size: 38px; margin: 16px 0 12px; }
-  .act .lede { font-size: 16.5px; margin-bottom: 20px; }
-  .act .cta-row .btn { padding: 12px 18px; font-size: 15px; }
-  .hud span { font-size: 11px; padding: 4px 8px; left: 36px; }
-  .hud i::after { width: 26px; }
+/* ---------- hero: the product, plainly ---------- */
+.hero { position: relative; padding: 148px 0 40px; text-align: center; overflow: hidden;
+  background: radial-gradient(ellipse 60% 45% at 50% 0%, rgba(124, 58, 237, 0.20), transparent 70%), var(--bg); }
+.hero-center { max-width: 1160px; }
+.hero-kicker { margin: 0 0 18px; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; color: var(--violet-2); }
+.hero h1 { font-size: clamp(44px, 6.2vw, 88px); line-height: 1.02; letter-spacing: -0.045em; margin: 0 0 22px; }
+.hero-lede { font-size: clamp(19px, 2.2vw, 24px); line-height: 1.45; color: var(--muted); max-width: 680px; margin: 0 auto 34px; }
+.hero-actions { display: flex; justify-content: center; align-items: center; gap: 28px; flex-wrap: wrap; }
+.btn.pill { border-radius: 999px; padding: 14px 28px; }
+.text-link { display: inline-flex; align-items: center; gap: 8px; color: var(--violet-2); text-decoration: none; font-weight: 600; font-size: 17px; }
+.text-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.text-link span { font-size: 22px; line-height: 1; margin-top: -2px; }
+.hero-note { margin: 22px 0 0; color: var(--faint); font-size: 14px; }
+.device { width: min(1120px, 92vw); margin: 76px auto 0; }
+.device-screen { position: relative; padding: 1.4% 1.4% 0; border-radius: 22px 22px 0 0; background: #121019; border: 1px solid #2a2635; border-bottom: 0;
+  box-shadow: 0 80px 140px -60px rgba(124, 58, 237, 0.55), 0 30px 60px -30px rgba(0, 0, 0, 0.8); }
+.device-screen::before { content: ''; position: absolute; top: 0.55%; left: 50%; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: #2c2838; }
+.device-screen img { width: 100%; height: auto; display: block; border-radius: 6px 6px 0 0; }
+.device-base { position: relative; height: clamp(10px, 1.5vw, 18px); margin: 0 -6.5%; border-radius: 0 0 22px 22px / 0 0 14px 14px;
+  background: linear-gradient(#3a3646, #1c1a24 55%, #121019); box-shadow: 0 18px 30px -16px rgba(0, 0, 0, 0.9); }
+.device-base i { position: absolute; left: 50%; top: 0; width: 15%; height: 42%; transform: translateX(-50%); border-radius: 0 0 10px 10px; background: #15131c; }
+.device figcaption { margin-top: 22px; color: var(--faint); font-size: 14px; }
+:root[data-theme='light'] .hero { background: radial-gradient(ellipse 60% 45% at 50% 0%, rgba(124, 58, 237, 0.10), transparent 70%), var(--bg); }
+.hero-facts { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 900px; margin: 72px auto 0; padding-bottom: 40px; }
+.hero-facts div { padding: 0 20px; border-left: 1px solid var(--border); }
+.hero-facts div:first-child { border-left: 0; }
+.hero-facts b { display: block; font-size: clamp(34px, 4vw, 48px); letter-spacing: -0.04em; line-height: 1; }
+.hero-facts span { display: block; margin-top: 10px; color: var(--muted); font-size: 15px; line-height: 1.4; }
+@media (max-width: 640px) {
+  .hero { padding-top: 120px; }
+  .hero-actions { flex-direction: column; gap: 18px; }
+  .device-base { margin: 0 -4%; }
+  .hero-facts { grid-template-columns: 1fr; gap: 26px; }
+  .hero-facts div { border-left: 0; }
 }
 .eyebrow { display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px 7px 8px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); backdrop-filter: blur(8px); font-size: 14px; color: var(--muted); }
 .eyebrow b { padding: 3px 9px; border-radius: 999px; background: linear-gradient(120deg, #7c3aed, #db2777); color: #fff; font-size: 12px; letter-spacing: 0.04em; }

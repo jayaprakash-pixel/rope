@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.png" alt="Rope — big AI image models on everyday laptops" width="100%" />
+<a href="https://rope-ai.vercel.app"><img src="docs/assets/hero.png" alt="Rope — big AI image models on everyday laptops. The website: a centred headline and the Rope app on a laptop, with a picture of a lighthouse made in 16 seconds." width="100%" /></a>
 
 <h1>Rope</h1>
 
@@ -23,6 +23,12 @@ Offline. Free. No account. No graphics card needed.</p>
 </div>
 
 ---
+
+## Watch the 1-minute film
+
+<a href="https://rope-ai.vercel.app/#demo"><img src="docs/assets/demo-play.png" alt="Play the 1-minute Rope film" width="100%" /></a>
+
+Rope on a 2021 laptop, nothing sped up: the plan before the run, a picture forming step by step, the plan for other laptops, and a big model file of your own. Narrated, with captions. [Watch it on the website](https://rope-ai.vercel.app/#demo) or [download the MP4](site/public/demo.mp4) (6 MB).
 
 ## Made on one ordinary laptop
 
@@ -122,7 +128,7 @@ cd app; npm install; npm run build; cd ..          # the browser app -> app\dist
 powershell -File installer\build-installer.ps1    # build\installer\Rope-Setup.exe
 ```
 
-Linux (Ubuntu 22.04+, processor only): `bash engine/build-linux.sh` builds in Docker. The website lives in `site/` (Vite, React, three.js, GSAP, Motion).
+Linux (Ubuntu 22.04+, processor only): `bash engine/build-linux.sh` builds in Docker. The website lives in `site/` (Vite, React, GSAP, Motion).
 
 Command line:
 

@@ -1,6 +1,6 @@
 # Rope website
 
-The public site: Vite + React + three.js (the hero rope), GSAP ScrollTrigger and Motion. Everything is bundled; no CDN at run time.
+The public site: Vite + React, GSAP ScrollTrigger and Motion. The hero shows the real app on a laptop frame; the film is made by `video/` (narrate, record, assemble). Everything is bundled; no CDN at run time.
 
 ```
 npm install

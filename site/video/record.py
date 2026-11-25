@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, "build", "demo")
-SITE = "https://rope-ai.vercel.app"
+SITE = os.environ.get("ROPE_SITE", "https://rope-ai.vercel.app")   # ROPE_SITE: record a local build before deploying
 APP = "http://127.0.0.1:4003"
 MINE = r"C:\Models\sd_xl_turbo_1.0_fp16.safetensors"   # a neutral path for the "your own model" scene (a hard link, real file name)
 D = json.load(open(os.path.join(OUT, "durations.json")))
@@ -34,13 +34,15 @@ def glide(pg, y, ms=1600):
         scrollTo(0, s + ({y} - s) * e); k < 1 ? requestAnimationFrame(f) : r(); }}; requestAnimationFrame(f); }})""")
 
 with sync_playwright() as p:
-    # 1. hero: the rope, the mouse drifts across it
+    # 1. hero: the headline, then a slow glide down to the app on the laptop
   if want("hero"):
     ctx, d, t0 = scene(p, "hero"); pg = ctx.new_page()
-    pg.goto(SITE + "/", wait_until="networkidle"); pg.wait_for_timeout(2200)
+    pg.goto(SITE + "/", wait_until="networkidle"); pg.wait_for_timeout(2400)
     s = time.time() - t0
-    for i in range(60):
-        pg.mouse.move(400 + i * 20, 300 + i * 6); pg.wait_for_timeout(int((D["hero"] + 1.4) * 1000 / 60))
+    pg.wait_for_timeout(3000)
+    y = pg.evaluate("document.querySelector('.device').getBoundingClientRect().top + scrollY - 90")
+    glide(pg, y, 3800)
+    pg.wait_for_timeout(int(max(0.5, D["hero"] + 1.6 - (time.time() - t0 - s)) * 1000))
     finish(ctx, d, "hero", {"hero": [s, D["hero"] + 1.4]})
 
     # 2 + 3. plan, then make the picture (the app on this laptop, GPU)
