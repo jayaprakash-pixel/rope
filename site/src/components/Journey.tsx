@@ -45,7 +45,12 @@ class Screen {
   small = document.createElement('canvas')
   noise: Uint8ClampedArray
   imgs: (ImageData | null)[] = []
+  picData = new Uint8Array(160 * 160 * 4)
+  picTex = new THREE.DataTexture(this.picData, 160, 160)
+  picKey = ''
   constructor(pics: Pic[]) {
+    this.picTex.colorSpace = THREE.SRGBColorSpace
+    this.picTex.flipY = true
     this.canvas.width = 1280; this.canvas.height = 800
     this.g = this.canvas.getContext('2d')!
     this.tex = new THREE.CanvasTexture(this.canvas)
@@ -64,7 +69,34 @@ class Screen {
       im.src = p.src
     })
   }
+  last = ''
+  // the picture: noise mixed into the image by `form` (same mix as before); nearest pixels until 0.92, then smooth
+  picture(idx: number, form: number): boolean {
+    const im = this.imgs[idx]
+    if (!im || form <= 0) return false
+    const k = Math.round(form * 48) / 48, key = `${idx}|${k}`
+    if (key !== this.picKey) {
+      this.picKey = key
+      const d = this.picData, n = this.noise, s = im.data
+      for (let i = 0; i < d.length; i += 4) {
+        const r = Math.min(1, Math.max(0, k * 1.25 - (n[i] / 255) * 0.25))
+        d[i] = n[i] + (s[i] - n[i]) * r; d[i + 1] = n[i + 1] + (s[i + 1] - n[i + 1]) * r; d[i + 2] = n[i + 2] + (s[i + 2] - n[i + 2]) * r; d[i + 3] = 255
+      }
+      const f = k > 0.92 ? THREE.LinearFilter : THREE.NearestFilter
+      this.picTex.magFilter = f; this.picTex.minFilter = f
+      this.picTex.needsUpdate = true
+    }
+    return true
+  }
   draw(o: { power: number; typed: string; plan: number; form: number; pic: Pic; idx: number; step: number }) {
+    // the canvas is 1280x800: redrawing and uploading it costs, so only when its content changes. The forming picture
+    // and the fades move in 1/48 steps (finer than the eye can tell on a screen this size).
+    const q = (x: number) => Math.round(x * 48) / 48
+    o = { ...o, power: q(o.power), plan: q(o.plan), form: q(o.form) }
+    const blink = o.typed.length < o.pic.prompt.length && Math.floor(performance.now() / 400) % 2 === 1
+    const key = `${o.power}|${o.typed.length}|${blink}|${o.plan}|${o.form >= 1 ? 2 : o.form > 0 ? 1 : 0}|${o.idx}|${o.step}`
+    if (key === this.last) return
+    this.last = key
     const g = this.g, W = 1280, H = 800
     g.globalAlpha = 1
     g.fillStyle = '#050409'; g.fillRect(0, 0, W, H)
@@ -82,7 +114,7 @@ class Screen {
     g.fillStyle = '#f4f2fb'; g.font = '700 44px Inter Variable, system-ui, sans-serif'; g.fillText('Describe an image', 56, 140)
     g.strokeStyle = 'rgba(167,139,250,0.55)'; g.lineWidth = 2; this.round(56, 170, 560, 120, 16); g.stroke()
     g.fillStyle = '#d9d5ee'; g.font = '400 23px Inter Variable, system-ui, sans-serif'
-    this.wrap(o.typed + (o.typed.length < o.pic.prompt.length && Math.floor(performance.now() / 400) % 2 ? '|' : ''), 78, 210, 520, 32)
+    this.wrap(o.typed + (blink ? '|' : ''), 78, 210, 520, 32)
     if (o.plan > 0) {
       g.globalAlpha = o.power * o.plan
       g.fillStyle = 'rgba(139,92,246,0.10)'; this.round(56, 320, 560, 250, 18); g.fill()
@@ -97,25 +129,8 @@ class Screen {
     // right: the picture forming
     const X = 680, Y = 100, S = 560
     g.fillStyle = '#07060d'; this.round(X, Y, S, S, 22); g.fill()
-    const im = this.imgs[o.idx]
-    if (im && o.form > 0) {
-      const sg = this.small.getContext('2d')!
-      const out = sg.createImageData(160, 160), d = out.data, n = this.noise, s = im.data
-      const k = o.form
-      for (let i = 0; i < d.length; i += 4) {
-        const r = Math.min(1, Math.max(0, k * 1.25 - (n[i] / 255) * 0.25))
-        d[i] = n[i] + (s[i] - n[i]) * r; d[i + 1] = n[i + 1] + (s[i + 1] - n[i + 1]) * r; d[i + 2] = n[i + 2] + (s[i + 2] - n[i + 2]) * r; d[i + 3] = 255
-      }
-      sg.putImageData(out, 0, 0)
-      g.save(); this.round(X, Y, S, S, 22); g.clip()
-      g.imageSmoothingEnabled = k > 0.92
-      g.drawImage(this.small, X, Y, S, S)
-      g.restore()
-    }
-    // progress
+    // the picture and the bar's fill are their own layers on the screen (see `overlays`): here only the track
     g.fillStyle = 'rgba(255,255,255,0.08)'; this.round(X, Y + S + 26, S, 8, 4); g.fill()
-    const bar = g.createLinearGradient(X, 0, X + S, 0); bar.addColorStop(0, '#a78bfa'); bar.addColorStop(0.6, '#f472b6'); bar.addColorStop(1, '#22d3ee')
-    g.fillStyle = bar; this.round(X, Y + S + 26, Math.max(8, S * o.form), 8, 4); g.fill()
     g.fillStyle = o.form >= 1 ? '#6ee7b7' : '#a39fbd'; g.font = '500 19px JetBrains Mono, monospace'
     g.fillText(o.form >= 1 ? `✓ done in ${o.pic.secs} s · saved` : o.form > 0 ? `shaping the image · step ${o.step} of ${o.pic.steps}` : 'ready', X, Y + S + 66)
     this.tex.needsUpdate = true
@@ -137,10 +152,12 @@ export default function Journey({ progress, pics, hud, onIntro }: Props) {
     const el = host.current
     if (!el) return
     let renderer: THREE.WebGLRenderer
-    try { renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' }) } catch { el.classList.add('no-webgl'); onIntro?.(); return }
+    try { renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', stencil: false }) } catch { el.classList.add('no-webgl'); onIntro?.(); return }
     const small = window.innerWidth < 760
     const still = reducedMotion()
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, small ? 1.5 : 2))
+    const maxPR = Math.min(window.devicePixelRatio, small ? 1.5 : 2)
+    let pr = maxPR
+    renderer.setPixelRatio(pr)
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.05
     el.appendChild(renderer.domElement)
@@ -183,6 +200,29 @@ export default function Journey({ progress, pics, hud, onIntro }: Props) {
     const screenMat = new THREE.MeshBasicMaterial({ map: screen.tex, toneMapped: false, color: new THREE.Color(1, 1, 1) })
     const display = new THREE.Mesh(new THREE.PlaneGeometry(3.16, 1.975), screenMat)
     display.position.set(0, 1.1, 0.042); hinge.add(display)
+    // canvas pixel rectangle -> a plane on the display (the display maps the 1280x800 canvas)
+    const onScreen = (x: number, y: number, w: number, h: number, mat: THREE.Material) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry((w / 1280) * 3.16, (h / 800) * 1.975), mat)
+      m.position.set(((x + w / 2) / 1280 - 0.5) * 3.16, (0.5 - (y + h / 2) / 800) * 1.975, 0.0015)
+      display.add(m); return m
+    }
+    const picMat = new THREE.ShaderMaterial({ transparent: true, toneMapped: false, uniforms: { uTex: { value: screen.picTex }, uPower: { value: 0 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+      fragmentShader: `uniform sampler2D uTex; uniform float uPower; varying vec2 vUv;
+        void main(){ vec2 q = abs(vUv - 0.5) * 560.0 - (280.0 - 22.0); float d = length(max(q, 0.0)) - 22.0;   // rounded corners, 22 px
+          float a = 1.0 - smoothstep(-0.8, 0.8, d); gl_FragColor = vec4(texture2D(uTex, vUv).rgb, a * uPower); }` })
+    const picPlane = onScreen(680, 100, 560, 560, picMat)
+    const barMat = new THREE.ShaderMaterial({ transparent: true, toneMapped: false, uniforms: { uW: { value: 8 }, uPower: { value: 0 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+      fragmentShader: `uniform float uW; uniform float uPower; varying vec2 vUv;
+        vec3 c(vec3 h){ return h; }
+        void main(){ float x = vUv.x * 560.0, y = (vUv.y - 0.5) * 8.0;
+          vec2 q = vec2(abs(x - uW * 0.5) - (uW * 0.5 - 4.0), abs(y));                     // a rounded bar uW px long, 8 px high
+          float d = length(max(q, 0.0)) - 4.0; float a = 1.0 - smoothstep(-0.6, 0.6, d);
+          vec3 A = vec3(0.655, 0.545, 0.980), B = vec3(0.957, 0.447, 0.714), C = vec3(0.133, 0.827, 0.933);   // #a78bfa #f472b6 #22d3ee
+          vec3 col = vUv.x < 0.6 ? mix(A, B, vUv.x / 0.6) : mix(B, C, (vUv.x - 0.6) / 0.4);
+          gl_FragColor = vec4(pow(col, vec3(2.2)), a * uPower); }` })
+    const barPlane = onScreen(680, 686, 560, 8, barMat)
     const logo = new THREE.Mesh(new THREE.CircleGeometry(0.12, 40), new THREE.MeshBasicMaterial({ color: '#c4b5fd', toneMapped: false }))
     logo.position.set(0, 1.1, -0.042); logo.rotation.y = Math.PI; hinge.add(logo)
     hinge.rotation.x = still ? -0.28 : Math.PI / 2 - 0.02
@@ -260,10 +300,22 @@ export default function Journey({ progress, pics, hud, onIntro }: Props) {
     composer.addPass(bloom)
     composer.addPass(new OutputPass())
 
+    let W = el.clientWidth, H = el.clientHeight
     const resize = () => {
-      const w = el.clientWidth, h = el.clientHeight
-      renderer.setSize(w, h, false); composer.setSize(w, h); bloom.setSize(w, h)
-      camera.aspect = w / h; camera.updateProjectionMatrix()
+      W = el.clientWidth; H = el.clientHeight
+      renderer.setPixelRatio(pr); composer.setPixelRatio(pr)
+      renderer.setSize(W, H, false); composer.setSize(W, H); bloom.setSize(W, H)   // the glow at CSS size, as it always was
+      camera.aspect = W / H; camera.updateProjectionMatrix()
+    }
+    // adaptive sharpness: a laptop that cannot keep ~50 fps renders fewer pixels (down to 0.6 of CSS size), and gets
+    // them back when there is room again. A fast machine never changes.
+    let ema = 16.7, lastT = performance.now(), lastChange = lastT
+    const adapt = (t: number) => {
+      const dt = Math.min(100, t - lastT); lastT = t
+      ema += (dt - ema) * 0.05
+      if (t - lastChange < 1500) return
+      if (ema > 21 && pr > 0.6) { pr = Math.max(0.6, +(pr - 0.2).toFixed(2)); lastChange = t; resize() }
+      else if (ema < 13 && pr < maxPR) { pr = Math.min(maxPR, +(pr + 0.1).toFixed(2)); lastChange = t; resize() }
     }
     resize()
     const ro = new ResizeObserver(resize); ro.observe(el)
@@ -281,25 +333,30 @@ export default function Journey({ progress, pics, hud, onIntro }: Props) {
          [0.4, new THREE.Vector3(L.x - 0.8, 1.7, 6.0), new THREE.Vector3(L.x - 1.5, 0.45, -0.6)],
          [0.72, new THREE.Vector3(-1.6, 2.8, 12.6), new THREE.Vector3(0.9, 0.9, -1.0)],
          [1, new THREE.Vector3(-2.8, 4.6, 17.5), new THREE.Vector3(-0.5, 0.3, -1.0)]]
+    const camPos = new THREE.Vector3(), camLook = new THREE.Vector3()
     const at = (p: number) => {
       let i = 0; while (i < kf.length - 2 && p > kf[i + 1][0]) i++
       const [p0, a0, b0] = kf[i], [p1, a1, b1] = kf[i + 1]
       const t = smooth(p0, p1, p)
-      return [a0.clone().lerp(a1, t), b0.clone().lerp(b1, t)] as const
+      camPos.lerpVectors(a0, a1, t); camLook.lerpVectors(b0, b1, t)
+      return [camPos, camLook] as const
     }
+    const tOrbit = new THREE.Vector3(), tRope = new THREE.Vector3()
+    const hudShown = anchors.map(() => 0)
 
     // intro timeline (seconds since start), then a loop of pictures on the screen
     const T = { open: [0.5, 2.2], power: [1.9, 2.6], scan: [2.4, 4.2], hud: [3.0, 4.6], type: [4.4, 6.6], plan: [6.6, 7.2] }
     const start = performance.now() / 1000
-    let introSent = false, raf = 0, visible = true, cam = at(0)
+    let introSent = false, raf = 0, visible = true, alive = true, cam = at(0)
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting }); io.observe(el)
     const pos = new THREE.Vector3(), look = new THREE.Vector3()
     const wp = new THREE.Vector3()
     let lastDraw = 0
 
-    const frame = () => {
+    const frame = (t?: number) => {
       raf = requestAnimationFrame(frame)
-      if (!visible) return
+      if (!visible) { lastT = performance.now(); return }
+      if (t !== undefined && !still) adapt(t)
       const now = performance.now() / 1000
       const e = still ? 60 : now - start
       const p = clamp01(progress.current)
@@ -324,16 +381,20 @@ export default function Journey({ progress, pics, hud, onIntro }: Props) {
       const planK = smooth(2.1, 2.7, le), form = clamp01((le - 2.9) / 3.4)
       const step = Math.min(pic.steps, Math.floor(form * pic.steps) + 1)
       if (now - lastDraw > 1 / 30) { screen.draw({ power, typed: loopE > 0 ? typed : '', plan: loopE > 0 ? planK : 0, form, pic, idx, step }); lastDraw = now }
+      picPlane.visible = screen.picture(idx, form); picMat.uniforms.uPower.value = power
+      barPlane.visible = power > 0; barMat.uniforms.uPower.value = power; barMat.uniforms.uW.value = Math.max(8, 560 * Math.round(form * 48) / 48)
 
       // HUD labels follow their anchors while the probe result is on screen
       const hudK = smooth(T.hud[0], T.hud[1], e) * (1 - smooth(0.18, 0.32, p))
       anchors.forEach((a, i) => {
         const node = hud.current[i]; if (!node) return
-        wp.copy(a); laptop.localToWorld(wp); wp.project(camera)
-        const x = (wp.x * 0.5 + 0.5) * el.clientWidth, y = (-wp.y * 0.5 + 0.5) * el.clientHeight
         const k = clamp01(hudK * 1.6 - i * 0.18)
-        node.style.transform = `translate(${x}px, ${y}px)`
-        node.style.opacity = String(k)
+        if (k === 0 && hudShown[i] === 0) return
+        hudShown[i] = k
+        wp.copy(a); laptop.localToWorld(wp); wp.project(camera)
+        const x = (wp.x * 0.5 + 0.5) * W, y = (-wp.y * 0.5 + 0.5) * H
+        node.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`
+        node.style.opacity = k.toFixed(3)
       })
 
       // the rope and the pictures, by scroll
@@ -344,10 +405,11 @@ export default function Journey({ progress, pics, hud, onIntro }: Props) {
         const k = smooth(0.46 + i * 0.045, 0.74 + i * 0.03, p)
         c.g.visible = k > 0.001
         if (!c.g.visible) return
-        const orbit = new THREE.Vector3(L.x + (small ? 0 : 0.4) + Math.cos(c.ang + now * 0.06) * (small ? 3.0 : 3.3), c.y, Math.sin(c.ang + now * 0.06) * (small ? 3.0 : 3.3) - 1.0)
+        const R_ = small ? 3.0 : 3.3
+        tOrbit.set(L.x + (small ? 0 : 0.4) + Math.cos(c.ang + now * 0.06) * R_, c.y, Math.sin(c.ang + now * 0.06) * R_ - 1.0)
         // along the rope first, then to its place in the orbit
-        const onRope = ropeCurve.getPointAt(Math.min(1, k * 1.4) * 0.55).clone(); hinge.localToWorld(onRope)
-        c.g.position.lerpVectors(onRope, orbit, smooth(0.45, 1, k))
+        ropeCurve.getPointAt(Math.min(1, k * 1.4) * 0.55, tRope); hinge.localToWorld(tRope)
+        c.g.position.lerpVectors(tRope, tOrbit, smooth(0.45, 1, k))
         c.g.scale.setScalar(0.25 + 0.75 * k)
         c.g.lookAt(camera.position)
         ;(c.img.material as THREE.MeshBasicMaterial).opacity = smooth(0, 0.3, k)
@@ -356,7 +418,7 @@ export default function Journey({ progress, pics, hud, onIntro }: Props) {
 
       // camera: keyframes by scroll, a little float and mouse parallax
       cam = at(p)
-      pos.copy(cam[0]).add(new THREE.Vector3(mouse.x * 0.7, -mouse.y * 0.45 + Math.sin(now * 0.4) * 0.06, 0))
+      pos.copy(cam[0]); pos.x += mouse.x * 0.7; pos.y += -mouse.y * 0.45 + Math.sin(now * 0.4) * 0.06
       camera.position.lerp(pos, still ? 1 : 0.08)
       look.lerp(cam[1], still ? 1 : 0.08)
       camera.lookAt(look)
@@ -365,13 +427,21 @@ export default function Journey({ progress, pics, hud, onIntro }: Props) {
       composer.render()
     }
     look.copy(cam[1]); camera.position.copy(cam[0])
-    frame()
+    cards.forEach((c) => (c.g.visible = true)); picPlane.visible = barPlane.visible = true
+    const go = () => { if (!alive) return; cards.forEach((c) => (c.g.visible = false)); composer.render(); frame() }
+    // the glow's own shaders (high-pass, five blur sizes, composite, blend) compile in the background too: without this
+    // the first frame stalls ~0.4 s while they compile
+    const warm = new THREE.Scene()
+    ;[bloom.materialHighPassFilter, ...bloom.separableBlurMaterials, bloom.compositeMaterial, bloom.blendMaterial]
+      .forEach((m) => warm.add(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), m)))
+    Promise.all([renderer.compileAsync(scene, camera), renderer.compileAsync(warm, camera)]).then(go, go)
 
     return () => {
+      alive = false
       cancelAnimationFrame(raf); ro.disconnect(); io.disconnect()
       window.removeEventListener('pointermove', onMove)
       scene.traverse((o) => { const m = o as THREE.Mesh; m.geometry?.dispose(); const mt = m.material as THREE.Material | undefined; mt?.dispose?.() })
-      screen.tex.dispose(); pmrem.dispose(); composer.dispose(); renderer.dispose(); renderer.domElement.remove()
+      screen.tex.dispose(); screen.picTex.dispose(); pmrem.dispose(); composer.dispose(); renderer.dispose(); renderer.domElement.remove()
     }
   }, [progress, pics, hud, onIntro])
   return <div ref={host} className="journey-canvas" aria-hidden />
