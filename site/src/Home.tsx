@@ -6,8 +6,7 @@ import {
   ArrowDown, Check, ChevronDown, CircleDashed, Clock, Cpu, Download, Eye, FileBox, Layers, Lock, Maximize2,
   MonitorDown, Play, Plug, ShieldCheck, Sparkles, Wand2,
 } from 'lucide-react'
-const Forge = lazy(() => import('./components/Forge'))   // three.js loads after the text is on screen
-import type { Phase } from './components/Forge'
+const Journey = lazy(() => import('./components/Journey'))   // three.js loads after the text is on screen
 import Nav, { Footer } from './components/Nav'
 import plans from './data/plans.json'
 import { SHOWCASE } from './data/showcase'
@@ -17,65 +16,83 @@ gsap.registerPlugin(ScrollTrigger)
 
 const fmt = (s: number) => (s < 60 ? `${s} s` : s < 3600 ? `${Math.floor(s / 60)} min${s % 60 ? ` ${s % 60} s` : ''}` : `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min`)
 
-/* ------------------------------------------------------------------ hero */
-const HERO_IMAGES = SHOWCASE.map((s) => `/showcase/${s.file}`)
-const HERO_STEPS = SHOWCASE.map((s) => (s.model.startsWith('FLUX') ? 4 : 1))   // the steps these pictures were made with
+/* ------------------------------------------------------------------ hero: a short film driven by scroll */
+const PICS = SHOWCASE.map((s) => ({ src: `/showcase/${s.file}`, model: s.model, secs: s.secs, prompt: s.prompt, steps: s.model.startsWith('FLUX') ? 4 : 1 }))
+const HUD = [
+  ['CPU', 'Ryzen 5 5600H · 6 cores · AVX2'],
+  ['RAM', '8 GB · 2.1 GB free'],
+  ['GPU', 'GTX 1650 · 4 GB'],
+  ['Disk', 'NVMe · 3.3 GB/s'],
+]
+// [fade in from, fully in, fade out from, gone] in scroll progress
+const ACTS: [number, number, number, number][] = [[-1, 0, 0.16, 0.24], [0.24, 0.3, 0.42, 0.48], [0.5, 0.56, 0.7, 0.76], [0.8, 0.88, 2, 3]]
 
 function Hero() {
-  const [ph, setPh] = useState<Phase>({ index: 0, step: 0, steps: HERO_STEPS[0], state: 'forming' })
-  const shot = SHOWCASE[ph.index]
-  const pct = ph.state === 'scatter' ? 0 : ph.state === 'done' ? 100 : (ph.step / ph.steps) * 100
-  // the bar fills over the forming time (3.2 s), one part per step; it empties at once for the next picture
-  const barDur = ph.state === 'forming' ? 3.2 / ph.steps : ph.state === 'done' ? 0.3 : 0
-  const model = shot.model.split(' · ')[0]
+  const section = useRef<HTMLElement>(null)
+  const progress = useRef(0)
+  const hud = useRef<(HTMLElement | null)[]>([])
+  const acts = useRef<(HTMLDivElement | null)[]>([])
+  const bar = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const ease = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t) }
+    const paint = (p: number) => {
+      progress.current = p
+      acts.current.forEach((el, i) => {
+        if (!el) return
+        const [a, b, c, d] = ACTS[i]
+        const k = ease(a, b, p) * (1 - ease(c, d, p))
+        el.style.opacity = String(k)
+        el.style.transform = `translateY(${(1 - k) * (p < b ? 40 : -40)}px)`
+        el.style.pointerEvents = k > 0.5 ? 'auto' : 'none'
+      })
+      if (bar.current) bar.current.style.transform = `scaleX(${p})`
+    }
+    paint(0)
+    const st = ScrollTrigger.create({ trigger: section.current, start: 'top top', end: 'bottom bottom', scrub: true, onUpdate: (s) => paint(s.progress) })
+    return () => st.kill()
+  }, [])
   return (
-    <section className="hero" aria-labelledby="hero-title">
-      <div className="aurora" aria-hidden><i /><i /><i /></div>
-      <div className="wrap hero-grid">
-        <motion.div className="hero-copy" initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}>
-          <span className="eyebrow"><b>v{VERSION}</b> Free · offline · open source</span>
-          <h1 id="hero-title">Big AI image models.<br /><span className="grad-text">Everyday laptops.</span></h1>
-          <p className="lede">Rope reads your laptop, picks the image model that fits it, and tells you how long a picture will take — before it starts. No cloud, no account, no graphics card needed.</p>
-          <div className="cta-row">
-            <a className="btn btn-primary" href={DOWNLOAD}><MonitorDown size={19} /> Download for Windows <small>{SETUP_MB} MB</small></a>
-            <a className="btn" href="#demo"><Play size={17} /> Watch the demo</a>
+    <section ref={section} className="journey" aria-labelledby="hero-title">
+      <div className="journey-stage">
+        <Suspense fallback={<div className="journey-canvas" />}>
+          <Journey progress={progress} pics={PICS} hud={hud} />
+        </Suspense>
+        <div className="journey-shade" aria-hidden />
+        {HUD.map(([k, v], i) => (
+          <div key={k} className="hud" ref={(el) => { hud.current[i] = el }} aria-hidden>
+            <i /><span><b>{k}</b>{v}</span>
           </div>
-          <div className="hero-stats">
-            <div><b>17</b><span>image models</span></div>
-            <div><b>4 GB</b><span>RAM to start</span></div>
-            <div><b>0</b><span>bytes sent anywhere</span></div>
+        ))}
+        <div className="wrap journey-acts">
+          <div className="act act-hero" ref={(el) => { acts.current[0] = el }}>
+            <span className="eyebrow"><b>v{VERSION}</b> Free · offline · open source</span>
+            <h1 id="hero-title">Big AI image models.<br /><span className="grad-text">Everyday laptops.</span></h1>
+            <p className="lede">Rope reads your laptop, picks the image model that fits it, and tells you how long a picture will take — before it starts. No cloud, no account, no graphics card needed.</p>
+            <div className="cta-row">
+              <a className="btn btn-primary" href={DOWNLOAD}><MonitorDown size={19} /> Download for Windows <small>{SETUP_MB} MB</small></a>
+              <a className="btn" href="#demo"><Play size={17} /> Watch the demo</a>
+            </div>
           </div>
-        </motion.div>
-
-        <motion.div className="forge-card" initial={{ opacity: 0, y: 40, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}>
-          <div className="forge-top">
-            <span className="live"><i />Plan on this laptop</span>
-            <span className="mono">GTX 1650 · 4 GB</span>
+          <div className="act" ref={(el) => { acts.current[1] = el }}>
+            <div className="kicker">01 · It reads your laptop</div>
+            <h2>First it measures. <span className="grad-text">Then it plans.</span></h2>
+            <p className="sub">Processor, free memory, graphics card, disk speed — in under a second. Then Rope picks the model, size and steps that fit, and tells you the time.</p>
           </div>
-          <div className="forge-chips mono">
-            <span>{model}</span><span>512 × 512</span><span>{ph.steps} step{ph.steps === 1 ? '' : 's'}</span><span className="t">~{shot.secs} s</span>
+          <div className="act" ref={(el) => { acts.current[2] = el }}>
+            <div className="kicker">02 · It makes the picture here</div>
+            <h2>Not in a cloud. <span className="grad-text">On this laptop.</span></h2>
+            <p className="sub">Noise becomes your picture in a few steps, with a live preview. About 15 seconds on a 2021 gaming laptop; about 30 on a plain one without a graphics card.</p>
           </div>
-          <div className="forge-frame">
-            <Suspense fallback={<div className="forge" />}>
-              <Forge images={HERO_IMAGES} steps={HERO_STEPS} onPhase={setPh} />
-            </Suspense>
-            {/* the real picture, sharp, once the particles have formed it */}
-            <motion.img key={ph.index} className="forge-img" src={HERO_IMAGES[ph.index]} alt="" initial={{ opacity: 0 }}
-              animate={{ opacity: ph.state === 'done' ? 1 : 0 }} transition={{ duration: ph.state === 'done' ? 0.7 : 0.25 }} />
+          <div className="act act-end" ref={(el) => { acts.current[3] = el }}>
+            <div className="kicker">03 · Everything stays with you</div>
+            <h2>Your laptop is <span className="grad-text">enough.</span></h2>
+            <p className="sub">17 image models. One engine written from scratch. Nothing you make leaves the laptop.</p>
+            <div className="cta-row"><a className="btn btn-primary" href={DOWNLOAD}><MonitorDown size={19} /> Download for Windows</a></div>
           </div>
-          <div className="forge-bar"><motion.i animate={{ width: `${pct}%` }} transition={{ duration: barDur, ease: 'linear' }} /></div>
-          <div className="forge-status mono" role="status" aria-live="polite">
-            <span>{ph.state === 'forming' ? `Shaping the image · step ${ph.step} of ${ph.steps}` : ph.state === 'done' ? `Done in ${shot.secs} s · saved to the gallery` : 'Next picture…'}</span>
-            {ph.state === 'done' && <span className="ok">✓</span>}
-          </div>
-          <AnimatePresence mode="wait">
-            <motion.p key={ph.index} className="forge-prompt" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.35 }}>
-              “{shot.prompt}”
-            </motion.p>
-          </AnimatePresence>
-        </motion.div>
+        </div>
+        <div className="journey-progress" aria-hidden><div ref={bar} /></div>
+        <div className="scroll-cue" aria-hidden><i />scroll</div>
       </div>
-      <div className="scroll-cue" aria-hidden><i />scroll</div>
     </section>
   )
 }

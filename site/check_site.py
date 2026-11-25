@@ -32,7 +32,7 @@ with sync_playwright() as p:
         pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
         pg.goto(URL + "/", wait_until="networkidle")
         pg.wait_for_timeout(2500)
-        canvas = pg.query_selector(".forge canvas")
+        canvas = pg.query_selector(".journey-canvas canvas")
         check(canvas is not None, f"{name}: the WebGL picture canvas is there")
         pg.screenshot(path=os.path.join(OUT, f"{name}-hero.png"))
         walk(pg)
