@@ -1,0 +1,7 @@
+{"model": "sd_xl_turbo_1.0_fp16.safetensors", "size": 512, "rc": 0, "wall_s": 21.8, "decoder": "vae", "buffer_cache_gib": 0.4, "unet_s": 8.65, "peak_commit_gib": 1.43, "peak_ws_gib": 4.24}
+{"model": "sd_xl_turbo_1.0_fp16.safetensors", "size": 768, "rc": 0, "wall_s": 60.1, "decoder": "vae", "buffer_cache_gib": 0.4, "unet_s": 17.61, "peak_commit_gib": 1.46, "peak_ws_gib": 4.73}
+{"model": "sd_xl_turbo_1.0_fp16.safetensors", "size": 1024, "rc": 0, "wall_s": 122.8, "decoder": "vae", "buffer_cache_gib": 0.4, "unet_s": 30.29, "peak_commit_gib": 1.47, "peak_ws_gib": 4.68}
+{"model": "sd_turbo.safetensors", "size": 512, "rc": 0, "wall_s": 8.0, "decoder": "taesd", "buffer_cache_gib": 0.78, "unet_s": 5.01, "peak_commit_gib": 0.69, "peak_ws_gib": 4.11}
+{"model": "flux1-schnell-q4_k.gguf", "size": 512, "rc": 0, "wall_s": 128.4, "decoder": "vae", "buffer_cache_gib": 0.35, "unet_s": 105.54, "peak_commit_gib": 1.37, "peak_ws_gib": 3.37}
+{"model": "flux1-schnell-q4_k.gguf", "size": 768, "rc": 0, "wall_s": 274.1, "decoder": "vae", "buffer_cache_gib": 0.35, "unet_s": 218.59, "peak_commit_gib": 1.38, "peak_ws_gib": 2.82}
+{"model": "flux1-schnell-q4_k.gguf", "size": 1024, "rc": 0, "wall_s": 429.8, "decoder": "vae", "buffer_cache_gib": 0.35, "unet_s": 326.12, "peak_commit_gib": 1.39, "peak_ws_gib": 3.99}

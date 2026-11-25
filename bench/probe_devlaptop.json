@@ -1,0 +1,16 @@
+{
+  "os": "Windows 10.0.26300",
+  "ram_installed_gib": 8.00,
+  "ram_usable_gib": 7.35,
+  "ram_free_gib": 3.16,
+  "cpu": "AMD Ryzen 5 5600H with Radeon Graphics",
+  "cores": 6,
+  "threads": 12,
+  "cpu_flags": {"sse42": true, "avx": true, "avx2": true, "fma": true, "f16c": true, "avx512f": false, "avx512_vnni": false, "avx_vnni": false},
+  "gpu": {"api": "cuda", "name": "NVIDIA GeForce GTX 1650", "vram_total_gib": 4.00, "vram_free_gib": 3.22, "compute_capability": "7.5", "sm": "sm_75", "multiprocessors": 14, "driver_cuda_version": "13.3", "tensor_cores": false},
+  "adapters": [
+    {"name": "NVIDIA GeForce GTX 1650", "vendor": "0x10DE", "dedicated_gib": 3.84, "shared_gib": 3.67, "integrated": false},
+    {"name": "AMD Radeon(TM) Graphics", "vendor": "0x1002", "dedicated_gib": 0.48, "shared_gib": 3.67, "integrated": true}
+  ],
+  "disk": {"dir": "<repo>\\models", "free_gib": 58.25, "total_gib": 475.68, "ssd": true, "bus": "NVMe", "seq_read_gbs": 3.52, "seq_write_gbs": 1.15}
+}

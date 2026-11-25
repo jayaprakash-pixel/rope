@@ -1,0 +1,9 @@
+layers=48 experts=128 top-k=8 expert=2.72 MiB  records=6098 tokens~129
+rho (expert reuse vs previous step, same layer) = 0.458   random baseline = 0.062
+cold-start ceiling: 0.930 hit rate (unique experts touched = 3439 = 9.15 GiB). 'static' is pre-warmed, others start cold.
+slots/layer cache GiB |    LRU    LFU static Belady | miss GiB/token (LRU)
+         16      2.04 |  0.588  0.627  0.592  0.736 | 0.414
+         32      4.09 |  0.781  0.813  0.827  0.881 | 0.220
+         48      6.13 |  0.890  0.896  0.941  0.920 | 0.111
+         64      8.17 |  0.919  0.922  0.984  0.927 | 0.081
+         96     12.26 |  0.929  0.929  0.999  0.930 | 0.072

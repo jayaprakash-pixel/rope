@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "<repo>\bench\tools\ref_modelfile.py", line 76, in <module>
+    (gguf_py if "--gguf-py" in sys.argv else gguf_plain)(p)
+  File "<repo>\bench\tools\ref_modelfile.py", line 64, in gguf_py
+    r = GGUFReader(path)
+        ^^^^^^^^^^^^^^^^
+  File "<repo>\bench\tools\..\..\repos\llama.cpp\gguf-py\gguf\gguf_reader.py", line 181, in __init__
+    offs, tensors_fields = self._build_tensor_info(offs, tensor_count)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>\bench\tools\..\..\repos\llama.cpp\gguf-py\gguf\gguf_reader.py", line 330, in _build_tensor_info
+    field = self._get_tensor_info_field(offs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>\bench\tools\..\..\repos\llama.cpp\gguf-py\gguf\gguf_reader.py", line 285, in _get_tensor_info_field
+    raise ValueError(f'Tensor dimensions count {n_dims[0]} exceeds GGML_MAX_DIMS ({GGML_MAX_DIMS})')
+ValueError: Tensor dimensions count 5 exceeds GGML_MAX_DIMS (4)

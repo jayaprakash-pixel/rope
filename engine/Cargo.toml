@@ -1,0 +1,27 @@
+[package]
+name = "rope"
+version = "0.1.0"
+edition = "2021"
+description = "Run big image, video and text AI models on low-end laptops"
+license = "MIT"
+build = "build.rs"
+
+[lib]
+name = "librope"
+path = "rust/lib.rs"
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "rope"
+path = "rust/main.rs"
+
+[features]
+cuda = []   # build and link the CUDA kernels (needs the CUDA toolkit)
+
+# Zero external crates on purpose: no third-party supply chain in the code that parses untrusted model files.
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1

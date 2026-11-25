@@ -1,0 +1,18 @@
+models/
+bin/
+repos/
+papers/
+*.log
+phasedoc/plan.db
+__pycache__/
+bench/diffusion/out/
+build/
+target/
+/bench/get_test/
+
+# rope serve (PM2): generated images stay on this machine
+/gallery/
+kit/
+
+# real-laptop test folders: reports carry host names
+/rope-test-fat32/

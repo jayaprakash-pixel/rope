@@ -1,0 +1,849 @@
+{
+ "version": 2,
+ "calibration": {
+  "_comment": "Dev laptop (Ryzen 5 5600H). Stage time = parallel x (gemm_gflops / device all-thread GFLOPS) + serial x (gemm_gflops_1t / device 1-thread GFLOPS). Split fitted from medians of 6-thread runs and 1-thread runs at 512², 1 step (bench/rope/RESULTS.md, 2026-11-13).",
+  "gemm_gflops": 497.0,
+  "gemm_gflops_1t": 97.4
+ },
+ "families": {
+  "sd2": {
+   "_comment": "How to run an architecture on rope: speed calibration (same compute for every model of the family), memory, default steps, companion files. Models below point to a family.",
+   "kind": "image",
+   "title": "Stable Diffusion 2.x",
+   "native_size": 512,
+   "max_size": 512,
+   "steps": {
+    "fast": 4,
+    "balanced": 4,
+    "best": 8
+   },
+   "unet_attention_share": 0.15,
+   "commit_gib": {
+    "taesd": 0.34,
+    "vae": 1.09
+   },
+   "memory_gib": {
+    "base": 0.3,
+    "text": 0.01,
+    "denoiser_at_512": 0.13,
+    "denoiser_exp": 1.5,
+    "vae_tile64": 1.14,
+    "taesd_at_512": 0.39,
+    "_source": "measured 2026-11-19 on the dev laptop, CPU only, 4 GB profile: process peak commit = base + the largest stage. SDXL-Turbo at 512 with VAE tiles 64 / 48 / 32 / 24 / 16 latent px: 1.43 / 1.01 / 0.60 / 0.43 / 0.34 GiB (least squares: 0.29 + 1.14 x (tile/64)^2); SDXL-Turbo at 768 / 1024 (tile 64) 1.46 / 1.47; FLUX 512 / 768 / 1024 (tile 64) 1.37 / 1.38 / 1.39; SD-Turbo with TAESD 0.69; denoiser-bound (tile 16): SDXL 960 0.65, SDXL 1024 0.61, FLUX 576 0.69 -> denoiser_at_512 / exponent: SDXL fitted through the denoiser-bound runs (512: 0.04 above base, 960: 0.35), FLUX the `rope profile` peak x 0.75 with the profile's exponent (the profile run overstates the real activations). Data: bench/rope/memory_4gb_cpu_2026-11-19.jsonl"
+   },
+   "stage_parallel_s": {
+    "open": 0.0,
+    "text": 0.12,
+    "unet_step": 1.982,
+    "taesd": 0.882,
+    "vae": 7.617
+   },
+   "stage_serial_s": {
+    "open": 0.03,
+    "text": 0.3,
+    "unet_step": 3.068,
+    "taesd": 0.428,
+    "vae": 3.203
+   },
+   "unet_bytes_reference": 3464000000,
+   "companions": [
+    {
+     "role": "taesd",
+     "name": "taesd.safetensors",
+     "repo": "madebyollin/taesd",
+     "path": "diffusion_pytorch_model.safetensors",
+     "bytes": 9793292,
+     "sha256": "db169d69145ec4ff064e49d99c95fa05d3eb04ee453de35824a6d0f325513549"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sd-turbo-config/tokenizer/vocab.json",
+     "repo": "stabilityai/sd-turbo",
+     "path": "tokenizer/vocab.json",
+     "bytes": 1059962,
+     "sha256": "e089ad92ba36837a0d31433e555c8f45fe601ab5c221d4f607ded32d9f7a4349",
+     "_sha_source": "small non-LFS file (Hugging Face lists only a git sha1): sha256 computed by rope from the 2026-11-13 TLS download"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sd-turbo-config/tokenizer/merges.txt",
+     "repo": "stabilityai/sd-turbo",
+     "path": "tokenizer/merges.txt",
+     "bytes": 524619,
+     "sha256": "9fd691f7c8039210e0fced15865466c65820d09b63988b0174bfe25de299051a",
+     "_sha_source": "as vocab.json"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sd-turbo-config/tokenizer/special_tokens_map.json",
+     "repo": "stabilityai/sd-turbo",
+     "path": "tokenizer/special_tokens_map.json",
+     "bytes": 574,
+     "sha256": "c2d0fb8b86ad86b1f46134d4a5f93fd1e688c932a78efc8d149087c33a53ad06",
+     "_sha_source": "as vocab.json (defines the pad token '!')"
+    }
+   ],
+   "guidance": 1.0,
+   "_timing_source": " Recalibrated 2026-11-14 after the CPU speed work (matmul cache blocking, implicit-GEMM conv, page-mapping prefetch, caching allocator): 6 thr / 1 thr measured on the dev laptop, Amdahl split (ratio 5.10).",
+   "gpu_components": [
+    "denoiser",
+    "vae"
+   ],
+   "_gpu_note": "UNet and VAE run on the op interface (P2.6.4); text encoder and TAESD are CPU-only",
+   "gpu_efficiency": {
+    "denoiser": 0.68,
+    "vae": 0.88
+   },
+   "_gpu_efficiency_source": "measured 2026-11-16 on the GTX 1650 (rule: 679 GFLOPS FP32): SD UNet 465 GFLOPS steady state (conv-heavy), VAE 594-598, FLUX DiT 713"
+  },
+  "sd1": {
+   "_comment": "How to run an architecture on rope: speed calibration (same compute for every model of the family), memory, default steps, companion files. Models below point to a family.",
+   "kind": "image",
+   "title": "Stable Diffusion 1.x",
+   "native_size": 512,
+   "max_size": 512,
+   "steps": {
+    "fast": 10,
+    "balanced": 20,
+    "best": 30
+   },
+   "unet_attention_share": 0.15,
+   "commit_gib": {
+    "taesd": 0.34,
+    "vae": 1.09
+   },
+   "memory_gib": {
+    "base": 0.3,
+    "text": 0.01,
+    "denoiser_at_512": 0.13,
+    "denoiser_exp": 1.5,
+    "vae_tile64": 1.14,
+    "taesd_at_512": 0.39,
+    "_source": "as sd2 (same method, per family)"
+   },
+   "stage_parallel_s": {
+    "open": 0.0,
+    "text": 0.042,
+    "unet_step": 1.982,
+    "taesd": 0.882,
+    "vae": 7.617
+   },
+   "stage_serial_s": {
+    "open": 0.03,
+    "text": 0.105,
+    "unet_step": 3.068,
+    "taesd": 0.428,
+    "vae": 3.203
+   },
+   "unet_bytes_reference": 3438083856,
+   "companions": [
+    {
+     "role": "taesd",
+     "name": "taesd.safetensors",
+     "repo": "madebyollin/taesd",
+     "path": "diffusion_pytorch_model.safetensors",
+     "bytes": 9793292,
+     "sha256": "db169d69145ec4ff064e49d99c95fa05d3eb04ee453de35824a6d0f325513549"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sd15-config/tokenizer/vocab.json",
+     "repo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+     "path": "tokenizer/vocab.json",
+     "bytes": 1059962,
+     "sha256": "e089ad92ba36837a0d31433e555c8f45fe601ab5c221d4f607ded32d9f7a4349",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-14 TLS download"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sd15-config/tokenizer/merges.txt",
+     "repo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+     "path": "tokenizer/merges.txt",
+     "bytes": 524619,
+     "sha256": "9fd691f7c8039210e0fced15865466c65820d09b63988b0174bfe25de299051a",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-14 TLS download"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sd15-config/tokenizer/special_tokens_map.json",
+     "repo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+     "path": "tokenizer/special_tokens_map.json",
+     "bytes": 472,
+     "sha256": "c4864a9376a8401918425bed71fc14fc0e81f9b59ec45c1cf96cccb2df508eac",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-14 TLS download"
+    }
+   ],
+   "guidance": 7.5,
+   "_timing_source": "SD 2.x UNet/VAE timings (same UNet size), text scaled by parameters 123M/354M. Checked 2026-11-14 (P1.7.3.4, 20 steps CFG, 4 GB profile): compute part 224 s estimated vs 223 s measured; the paging term was not exercised in that run (file cache of the 8 GB dev laptop) Recalibrated 2026-11-14 after the CPU speed work (matmul cache blocking, implicit-GEMM conv, page-mapping prefetch, caching allocator): 6 thr / 1 thr measured on the dev laptop, Amdahl split (ratio 5.10).",
+   "gpu_components": [
+    "denoiser",
+    "vae"
+   ],
+   "_gpu_note": "UNet and VAE run on the op interface (P2.6.4); text encoder and TAESD are CPU-only",
+   "gpu_efficiency": {
+    "denoiser": 0.68,
+    "vae": 0.88
+   },
+   "_gpu_efficiency_source": "measured 2026-11-16 on the GTX 1650 (rule: 679 GFLOPS FP32): SD UNet 465 GFLOPS steady state (conv-heavy), VAE 594-598, FLUX DiT 713"
+  },
+  "flux": {
+   "kind": "image",
+   "title": "FLUX.1 (12B diffusion transformer, T5-XXL + CLIP-L)",
+   "native_size": 512,
+   "max_size": 1024,
+   "_size_note": "1024x1024 decodes with the tiled VAE (P1.5.5.7): 9 tiles of 512x512, private memory of one tile",
+   "steps": {
+    "fast": 2,
+    "balanced": 4,
+    "best": 4
+   },
+   "guidance": 1.0,
+   "unet_attention_share": 0.1,
+   "commit_gib": {
+    "taesd": 0.0,
+    "vae": 1.2
+   },
+   "memory_gib": {
+    "base": 0.3,
+    "text": 0.07,
+    "denoiser_at_512": 0.32,
+    "denoiser_exp": 1.2,
+    "vae_tile64": 1.09,
+    "taesd_at_512": 0.39,
+    "_source": "as sd2 (same method, per family)"
+   },
+   "stage_parallel_s": {
+    "open": 0.0,
+    "text": 5.886,
+    "unet_step": 42.736,
+    "taesd": 0.0,
+    "vae": 7.456
+   },
+   "stage_serial_s": {
+    "open": 0.0,
+    "text": 3.314,
+    "unet_step": 21.674,
+    "taesd": 0.0,
+    "vae": 2.754
+   },
+   "_timing_source": "measured 2026-11-14 at 512x512 on the calibration laptop: 6 threads text 11.39 / DiT step 91.21 / VAE 21.75 s, 1 thread 35.90 / 265.8 / 66.67 s, split with the Amdahl model (ratio 5.10) Recalibrated 2026-11-14 after the CPU speed work (matmul cache blocking, implicit-GEMM conv, page-mapping prefetch, caching allocator): 6 thr / 1 thr measured on the dev laptop, Amdahl split (ratio 5.10).",
+   "unet_bytes_reference": 6884552960,
+   "companions": [
+    {
+     "role": "t5",
+     "name": "t5-v1_1-xxl-encoder-Q4_K_M.gguf",
+     "repo": "city96/t5-v1_1-xxl-encoder-gguf",
+     "path": "t5-v1_1-xxl-encoder-Q4_K_M.gguf",
+     "bytes": 2896123072,
+     "sha256": "6be2b0b7e2de7cf2919340c88cb802a103a997ce46c53131cec91958c1db1af4"
+    },
+    {
+     "role": "t5-tokenizer",
+     "name": "t5-config/spiece.model",
+     "repo": "google/t5-v1_1-xxl",
+     "path": "spiece.model",
+     "bytes": 791656,
+     "sha256": "d60acb128cf7b7f2536e8f38a5b18a05535c9e14c7a355904270e15b0945ea86"
+    },
+    {
+     "role": "clip",
+     "name": "clip_l.safetensors",
+     "repo": "comfyanonymous/flux_text_encoders",
+     "path": "clip_l.safetensors",
+     "bytes": 246144152,
+     "sha256": "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sd15-config/tokenizer/vocab.json",
+     "repo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+     "path": "tokenizer/vocab.json",
+     "bytes": 1059962,
+     "sha256": "e089ad92ba36837a0d31433e555c8f45fe601ab5c221d4f607ded32d9f7a4349",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-14 TLS download"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sd15-config/tokenizer/merges.txt",
+     "repo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+     "path": "tokenizer/merges.txt",
+     "bytes": 524619,
+     "sha256": "9fd691f7c8039210e0fced15865466c65820d09b63988b0174bfe25de299051a",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-14 TLS download"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sd15-config/tokenizer/special_tokens_map.json",
+     "repo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+     "path": "tokenizer/special_tokens_map.json",
+     "bytes": 472,
+     "sha256": "c4864a9376a8401918425bed71fc14fc0e81f9b59ec45c1cf96cccb2df508eac",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-14 TLS download"
+    },
+    {
+     "role": "vae",
+     "name": "ae.safetensors",
+     "repo": "Comfy-Org/z_image_turbo",
+     "path": "split_files/vae/ae.safetensors",
+     "bytes": 335304388,
+     "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+     "_sha_source": "official BFL repo is gated; same sha256 in 2 independent mirrors (P0)"
+    },
+    {
+     "role": "preview-taesd",
+     "name": "taef1.safetensors",
+     "repo": "madebyollin/taef1",
+     "path": "diffusion_pytorch_model.safetensors",
+     "bytes": 9848636,
+     "sha256": "47a6c2bff850da04b267cab70fe3553fef57255eb9a8e76852baa0a87850e54d",
+     "_sha_source": "downloaded 2026-11-21 with the user's yes; sha256 equals the Hugging Face LFS oid; preview decoder only (the final image uses the full VAE)"
+    }
+   ],
+   "gpu_components": [
+    "denoiser",
+    "vae"
+   ],
+   "_gpu_note": "DiT and VAE run on the op interface; T5 and CLIP-L are CPU-only for now",
+   "local_quantize": true,
+   "gpu_efficiency": {
+    "denoiser": 1.0,
+    "vae": 0.88
+   },
+   "_gpu_efficiency_source": "measured 2026-11-16 on the GTX 1650 (rule: 679 GFLOPS FP32): SD UNet 465 GFLOPS steady state (conv-heavy), VAE 594-598, FLUX DiT 713"
+  },
+  "sdxl": {
+   "kind": "image",
+   "title": "Stable Diffusion XL (2.6B UNet, CLIP-L + CLIP-G)",
+   "native_size": 1024,
+   "max_size": 1024,
+   "steps": {
+    "fast": 15,
+    "balanced": 25,
+    "best": 40
+   },
+   "guidance": 5.0,
+   "unet_attention_share": 0.0,
+   "_attention_note": "512 -> 1024 grew the UNet step 3.49x, below 4x: the FP16 weight reads are a fixed cost per step, which the attention-share model cannot express; share 0 is the closest (512 estimate 7.4 s vs 8.47 s measured)",
+   "commit_gib": {
+    "taesd": 0.0,
+    "vae": 1.1
+   },
+   "memory_gib": {
+    "base": 0.3,
+    "text": 0.01,
+    "denoiser_at_512": 0.07,
+    "denoiser_exp": 2.4,
+    "vae_tile64": 1.14,
+    "taesd_at_512": 0.39,
+    "_source": "as sd2 (same method, per family)"
+   },
+   "stage_parallel_s": {
+    "open": 0.0,
+    "text": 0.31,
+    "unet_step": 16.07,
+    "taesd": 0.0,
+    "vae": 30.08
+   },
+   "stage_serial_s": {
+    "open": 0.04,
+    "text": 0.57,
+    "unet_step": 13.5,
+    "taesd": 0.0,
+    "vae": 13.88
+   },
+   "_timing_source": "measured 2026-11-16 on the dev laptop (SDXL-Turbo FP16, same architecture as base): 6 thr / 1 thr, Amdahl split (ratio 5.10). UNet step at 1024: 29.57 / 95.46 s. Text: 0.88 / 2.15 s. VAE: 4x the 512 decode (10.99 / 41.82 s), the un-tiled equivalent at 1024 that the tiled-VAE rule (9 tiles x (512/1024)^2) expects; measured tiled 1024: 91.35 s (rule 98.9 s).",
+   "unet_bytes_reference": 5135000000,
+   "companions": [
+    {
+     "role": "tokenizer",
+     "name": "sdxl-turbo-config/tokenizer/vocab.json",
+     "repo": "stabilityai/sdxl-turbo",
+     "path": "tokenizer/vocab.json",
+     "bytes": 1059962,
+     "sha256": "e089ad92ba36837a0d31433e555c8f45fe601ab5c221d4f607ded32d9f7a4349",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-16 TLS download"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sdxl-turbo-config/tokenizer/merges.txt",
+     "repo": "stabilityai/sdxl-turbo",
+     "path": "tokenizer/merges.txt",
+     "bytes": 524619,
+     "sha256": "9fd691f7c8039210e0fced15865466c65820d09b63988b0174bfe25de299051a",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-16 TLS download"
+    },
+    {
+     "role": "tokenizer",
+     "name": "sdxl-turbo-config/tokenizer/special_tokens_map.json",
+     "repo": "stabilityai/sdxl-turbo",
+     "path": "tokenizer/special_tokens_map.json",
+     "bytes": 586,
+     "sha256": "6a757fc443f84ad1def3b893aac3858178f2a1513e3cf97b35ff131b5d88edd5",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-16 TLS download"
+    },
+    {
+     "role": "clip-g-tokenizer",
+     "name": "sdxl-turbo-config/tokenizer_2/vocab.json",
+     "repo": "stabilityai/sdxl-turbo",
+     "path": "tokenizer_2/vocab.json",
+     "bytes": 1059962,
+     "sha256": "e089ad92ba36837a0d31433e555c8f45fe601ab5c221d4f607ded32d9f7a4349",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-16 TLS download"
+    },
+    {
+     "role": "clip-g-tokenizer",
+     "name": "sdxl-turbo-config/tokenizer_2/merges.txt",
+     "repo": "stabilityai/sdxl-turbo",
+     "path": "tokenizer_2/merges.txt",
+     "bytes": 524619,
+     "sha256": "9fd691f7c8039210e0fced15865466c65820d09b63988b0174bfe25de299051a",
+     "_sha_source": "small non-LFS file: sha256 computed by rope from the 2026-11-16 TLS download"
+    },
+    {
+     "role": "clip-g-tokenizer",
+     "name": "sdxl-turbo-config/tokenizer_2/special_tokens_map.json",
+     "repo": "stabilityai/sdxl-turbo",
+     "path": "tokenizer_2/special_tokens_map.json",
+     "bytes": 460,
+     "sha256": "f118ab3a983206e4f32583448de6bd6aae4ee21869135cef1f5848a753cdaab6",
+     "_sha_source": "as vocab.json (defines the CLIP-G pad token '!')"
+    },
+    {
+     "role": "preview-taesd",
+     "name": "taesdxl.safetensors",
+     "repo": "madebyollin/taesdxl",
+     "path": "diffusion_pytorch_model.safetensors",
+     "bytes": 9793292,
+     "sha256": "ff4824aca94dd6111e0340fa749347fb74101060d9712cb5ef1ca8f1cf17502f",
+     "_sha_source": "downloaded 2026-11-21 with the user's yes; sha256 equals the Hugging Face LFS oid; preview decoder only (the final image uses the full VAE)"
+    }
+   ],
+   "gpu_components": [
+    "denoiser",
+    "vae"
+   ],
+   "_gpu_note": "UNet and VAE on the op interface (same code as SD 1.x/2.x); text encoders CPU-only; GPU efficiency assumed equal to the SD UNet until measured",
+   "local_quantize": true,
+   "gpu_efficiency": {
+    "denoiser": 0.68,
+    "vae": 0.88
+   }
+  }
+ },
+ "models": [
+  {
+   "id": "sd-turbo",
+   "family": "sd2",
+   "title": "SD-Turbo (Stable Diffusion 2.1 distilled, 1-4 steps)",
+   "steps": {
+    "fast": 1,
+    "balanced": 1,
+    "best": 4
+   },
+   "files": [
+    {
+     "role": "model",
+     "name": "sd_turbo.safetensors",
+     "repo": "stabilityai/sd-turbo",
+     "path": "sd_turbo.safetensors",
+     "bytes": 5214561328,
+     "sha256": "3f067a1b943cf162f2b8f8588f6cf5824bd5b4c7d1d88d87164b9ca123616549"
+    }
+   ],
+   "_note": "tuned settings for this exact file (matched by sha256); unknown SD 2.x files get the family defaults",
+   "kind": "image"
+  },
+  {
+   "id": "sd-1.5",
+   "family": "sd1",
+   "kind": "image",
+   "title": "Stable Diffusion 1.5 (EMA-only, FP32)",
+   "files": [
+    {
+     "role": "model",
+     "name": "v1-5-pruned-emaonly.safetensors",
+     "repo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+     "path": "v1-5-pruned-emaonly.safetensors",
+     "bytes": 4265146304,
+     "sha256": "6ce0161689b3853acaa03779ec93eafe75a02f4ced659bee03f50797806fa2fa"
+    }
+   ]
+  },
+  {
+   "id": "sdxl-turbo",
+   "family": "sdxl",
+   "title": "SDXL-Turbo (SDXL distilled, 1-4 steps, 512)",
+   "native_size": 512,
+   "guidance": 1.0,
+   "steps": {
+    "fast": 1,
+    "balanced": 1,
+    "best": 4
+   },
+   "files": [
+    {
+     "role": "model",
+     "name": "sd_xl_turbo_1.0_fp16.safetensors",
+     "repo": "stabilityai/sdxl-turbo",
+     "path": "sd_xl_turbo_1.0_fp16.safetensors",
+     "bytes": 6938081905,
+     "sha256": "e869ac7d6942cb327d68d5ed83a40447aadf20e0c3358d98b2cc9e270db0da26"
+    }
+   ],
+   "_note": "tuned settings for this exact file (matched by sha256): 512, no guidance; SDXL base files get the family defaults (1024, CFG 5)",
+   "kind": "image"
+  },
+  {
+   "id": "flux-schnell-q4k",
+   "title": "FLUX.1-schnell Q4_K (12B, 4 steps)",
+   "files": [
+    {
+     "role": "model",
+     "name": "flux1-schnell-q4_k.gguf",
+     "repo": "leejet/FLUX.1-schnell-gguf",
+     "path": "flux1-schnell-q4_k.gguf",
+     "bytes": 6884606880,
+     "sha256": "619697cc4c2bf587416aa1afa98d474a44c80eb4e3a3f64ea8f99ab0ed9adb7a"
+    }
+   ],
+   "family": "flux",
+   "kind": "image"
+  },
+  {
+   "id": "dreamshaper-8",
+   "family": "sd1",
+   "kind": "image",
+   "title": "DreamShaper 8 (SD 1.5 fine-tune, all-round)",
+   "steps": {
+    "fast": 15,
+    "balanced": 20,
+    "best": 30
+   },
+   "guidance": 7.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "DreamShaper_8_pruned.safetensors",
+     "repo": "Lykon/DreamShaper",
+     "path": "DreamShaper_8_pruned.safetensors",
+     "bytes": 2132625894,
+     "sha256": "879db523c30d3b9017143d56705015e15a2cb5628762c11d086fed9538abd7fd"
+    }
+   ],
+   "unet_bytes": 1719041928,
+   "license": "other",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "absolutereality-1.8.1",
+   "family": "sd1",
+   "kind": "image",
+   "title": "AbsoluteReality 1.8.1 (SD 1.5 fine-tune, photo)",
+   "steps": {
+    "fast": 15,
+    "balanced": 20,
+    "best": 30
+   },
+   "guidance": 7.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "AbsoluteReality_1.8.1_pruned.safetensors",
+     "repo": "Lykon/AbsoluteReality",
+     "path": "AbsoluteReality_1.8.1_pruned.safetensors",
+     "bytes": 2132625432,
+     "sha256": "463d6a9fe8a4b56a4d69ef3692074c0617428dfd8e8f12f9efe3b1e9a71717ce"
+    }
+   ],
+   "unet_bytes": 1719041928,
+   "license": "other",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "realistic-vision-5.1",
+   "family": "sd1",
+   "kind": "image",
+   "title": "Realistic Vision 5.1 (SD 1.5 fine-tune, photo)",
+   "steps": {
+    "fast": 15,
+    "balanced": 20,
+    "best": 30
+   },
+   "guidance": 7.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "Realistic_Vision_V5.1_fp16-no-ema.safetensors",
+     "repo": "SG161222/Realistic_Vision_V5.1_noVAE",
+     "path": "Realistic_Vision_V5.1_fp16-no-ema.safetensors",
+     "bytes": 2132625894,
+     "sha256": "99a75a901f4fec732056930a89fa34cf360f6f72d75ce5bf333ddf82adf8dd2a"
+    }
+   ],
+   "unet_bytes": 1719041928,
+   "license": "creativeml-openrail-m",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "realistic-vision-6.0",
+   "family": "sd1",
+   "kind": "image",
+   "title": "Realistic Vision 6.0 B1 (SD 1.5 fine-tune, photo)",
+   "steps": {
+    "fast": 15,
+    "balanced": 20,
+    "best": 30
+   },
+   "guidance": 7.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "Realistic_Vision_V6.0_NV_B1_fp16.safetensors",
+     "repo": "SG161222/Realistic_Vision_V6.0_B1_noVAE",
+     "path": "Realistic_Vision_V6.0_NV_B1_fp16.safetensors",
+     "bytes": 2132625894,
+     "sha256": "c48bfd159cd7a6507b128685e963c398fa72399cefafaf603781df50ce836cc7"
+    }
+   ],
+   "unet_bytes": 1719041928,
+   "license": "creativeml-openrail-m",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "deliberate-v2",
+   "family": "sd1",
+   "kind": "image",
+   "title": "Deliberate v2 (SD 1.5 fine-tune)",
+   "steps": {
+    "fast": 15,
+    "balanced": 20,
+    "best": 30
+   },
+   "guidance": 7.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "Deliberate_v2.safetensors",
+     "repo": "XpucT/Deliberate",
+     "path": "Deliberate_v2.safetensors",
+     "bytes": 2132625431,
+     "sha256": "9aba26abdfcd46073e0a1d42027a3a3bcc969f562d58a03637bf0a0ded6586c9"
+    }
+   ],
+   "unet_bytes": 1719041928,
+   "license": "unknown",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "sdxl-base-1.0",
+   "family": "sdxl",
+   "kind": "image",
+   "title": "Stable Diffusion XL base 1.0",
+   "steps": {
+    "fast": 15,
+    "balanced": 25,
+    "best": 40
+   },
+   "guidance": 5.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "sd_xl_base_1.0.safetensors",
+     "repo": "stabilityai/stable-diffusion-xl-base-1.0",
+     "path": "sd_xl_base_1.0.safetensors",
+     "bytes": 6938078334,
+     "sha256": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b"
+    }
+   ],
+   "unet_bytes": 5134927368,
+   "license": "openrail++",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "dreamshaper-xl-turbo",
+   "family": "sdxl",
+   "kind": "image",
+   "title": "DreamShaper XL Turbo v2.1 (SDXL, few steps)",
+   "steps": {
+    "fast": 4,
+    "balanced": 6,
+    "best": 8
+   },
+   "guidance": 2.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "DreamShaperXL_Turbo_v2_1.safetensors",
+     "repo": "Lykon/dreamshaper-xl-v2-turbo",
+     "path": "DreamShaperXL_Turbo_v2_1.safetensors",
+     "bytes": 6939220250,
+     "sha256": "4496b36d48bfd7cfe4e5dbce3485db567bcefa2bef7238d290dbd45612125083"
+    }
+   ],
+   "unet_bytes": 5134927368,
+   "license": "openrail++",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "realvisxl-4.0",
+   "family": "sdxl",
+   "kind": "image",
+   "title": "RealVisXL 4.0 (SDXL fine-tune, photo)",
+   "steps": {
+    "fast": 15,
+    "balanced": 25,
+    "best": 40
+   },
+   "guidance": 5.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "RealVisXL_V4.0.safetensors",
+     "repo": "SG161222/RealVisXL_V4.0",
+     "path": "RealVisXL_V4.0.safetensors",
+     "bytes": 6938040706,
+     "sha256": "912c9dc74f5855175c31a7993f863a043ac8dcc31732b324cd05d75cd7e16844"
+    }
+   ],
+   "unet_bytes": 5134927368,
+   "license": "openrail++",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "juggernaut-xl-9",
+   "family": "sdxl",
+   "kind": "image",
+   "title": "Juggernaut XL v9 (SDXL fine-tune)",
+   "steps": {
+    "fast": 15,
+    "balanced": 25,
+    "best": 40
+   },
+   "guidance": 5.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors",
+     "repo": "RunDiffusion/Juggernaut-XL-v9",
+     "path": "Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors",
+     "bytes": 7105348188,
+     "sha256": "c9e3e68f89b8e38689e1097d4be4573cf308de4e3fd044c64ca697bdb4aa8bca"
+    }
+   ],
+   "unet_bytes": 5134927368,
+   "license": "creativeml-openrail-m",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "sdxl-lightning-4step",
+   "family": "sdxl",
+   "kind": "image",
+   "title": "SDXL-Lightning 4-step (SDXL distilled)",
+   "steps": {
+    "fast": 4,
+    "balanced": 4,
+    "best": 4
+   },
+   "guidance": 1.0,
+   "files": [
+    {
+     "role": "model",
+     "name": "sdxl_lightning_4step.safetensors",
+     "repo": "ByteDance/SDXL-Lightning",
+     "path": "sdxl_lightning_4step.safetensors",
+     "bytes": 6938040682,
+     "sha256": "e0d996ee0013e79d9d3561f50fcafb9a17e3ff07b780358e3b66d67932c4d490"
+    }
+   ],
+   "unet_bytes": 5134927368,
+   "license": "openrail++",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "flux-schnell-q8",
+   "family": "flux",
+   "kind": "image",
+   "title": "FLUX.1-schnell Q8_0 (12B, 4 steps, best quality of the quantized files)",
+   "files": [
+    {
+     "role": "model",
+     "name": "flux1-schnell-q8_0.gguf",
+     "repo": "leejet/FLUX.1-schnell-gguf",
+     "path": "flux1-schnell-q8_0.gguf",
+     "bytes": 12801721248,
+     "sha256": "098c424cfa97526d9227da984563ad1509298f7573458ed210cd5ba0220ab635"
+    }
+   ],
+   "unet_bytes": 12801667328,
+   "license": "apache-2.0",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "flux-schnell-q4-0",
+   "family": "flux",
+   "kind": "image",
+   "title": "FLUX.1-schnell Q4_0 (12B, 4 steps)",
+   "files": [
+    {
+     "role": "model",
+     "name": "flux1-schnell-q4_0.gguf",
+     "repo": "leejet/FLUX.1-schnell-gguf",
+     "path": "flux1-schnell-q4_0.gguf",
+     "bytes": 6884606880,
+     "sha256": "4f30741d2bfc786c92934ce925fcb0a43df3441e76504b797c3d5d5f0878fa6f"
+    }
+   ],
+   "unet_bytes": 6884552960,
+   "license": "apache-2.0",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "flux-schnell-q6k",
+   "family": "flux",
+   "kind": "image",
+   "title": "FLUX.1-schnell Q6_K (12B, 4 steps)",
+   "files": [
+    {
+     "role": "model",
+     "name": "flux1-schnell-Q6_K.gguf",
+     "repo": "city96/FLUX.1-schnell-gguf",
+     "path": "flux1-schnell-Q6_K.gguf",
+     "bytes": 9834955808,
+     "sha256": "a42fd143cec4d7194da281dc8d23a8fe54b16875a13423c042cb545d1da6fa50"
+    }
+   ],
+   "unet_bytes": 9834901760,
+   "license": "apache-2.0",
+   "tested": false,
+   "_checked": "header and Hugging Face metadata only (architecture, text encoders, VAE, weight types); not run on rope yet"
+  },
+  {
+   "id": "wan2.1-t2v-1.3b",
+   "title": "Wan 2.1 text-to-video 1.3B Q4_K_M",
+   "files": [
+    {
+     "role": "model",
+     "name": "wan2.1_t2v_1.3b-q4_k_m.gguf",
+     "repo": "calcuis/wan-1.3b-gguf",
+     "path": "wan2.1_t2v_1.3b-q4_k_m.gguf",
+     "bytes": 1034031328,
+     "sha256": "f3c1a3fb984d49d3963cc4a93d4f5103deef5909eb5e948513fb6c6d582a350e"
+    }
+   ],
+   "family": "wan",
+   "kind": "video"
+  }
+ ]
+}
